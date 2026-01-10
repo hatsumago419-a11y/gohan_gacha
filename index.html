@@ -1,61 +1,65 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>今日のご飯は？</title>
 
-  <title>今日のご飯は？</title>
-  <style>
-    body {
-      font-family: "Segoe UI", sans-serif;
-      text-align: center;
-      padding: 40px;
-      background-color: #1e1e1e;
-      color: #f0f0f0;
-    }
+<style>
+body {
+  font-family: "Segoe UI", sans-serif;
+  text-align: center;
+  padding: 40px;
+  background-color: #1e1e1e;
+  color: #f0f0f0;
+}
 
-    h1 {
-      margin-bottom: 30px;
-    }
+h1 {
+  margin-bottom: 20px;
+}
 
-    .buttons {
-      margin-bottom: 20px;
-    }
+.buttons {
+  margin-bottom: 15px;
+}
 
-    button {
-      font-size: 16px;
-      padding: 12px 22px;
-      margin: 8px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      background-color: #3a3a3a;
-      color: #fff;
-    }
+button {
+  font-size: 16px;
+  padding: 12px 22px;
+  margin: 6px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  background-color: #3a3a3a;
+  color: #fff;
+}
 
-    button:hover {
-      background-color: #555;
-    }
+button:hover {
+  background-color: #555;
+}
 
-    #resultBox {
-      margin: 30px auto 10px;
-      padding: 20px;
-      max-width: 420px;
-      background-color: #2a2a2a;
-      border-radius: 12px;
-      font-size: 20px;
-      font-weight: bold;
-      display: none;
-    }
+button.selected {
+  background-color: #6a9cff;
+  color: #000;
+}
 
-    #note {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #cfcfcf;
-      display: none;
-    }
-/* スマホ向け調整 */
+#resultBox {
+  margin: 30px auto 10px;
+  padding: 20px;
+  max-width: 420px;
+  background-color: #2a2a2a;
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: bold;
+  display: none;
+}
+
+#note {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #cfcfcf;
+  display: none;
+}
+
 @media (max-width: 600px) {
   body {
     font-size: 18px;
@@ -70,92 +74,122 @@
     padding: 12px 18px;
     margin: 6px;
   }
+}
+</style>
+</head>
 
-  #result {
-    font-size: 18px;
-    padding: 14px;
+<body>
+
+<h1>今日のご飯は？</h1>
+
+<div class="buttons">
+  <div>今日の体調は？</div>
+  <button id="genkiBtn" onclick="setCondition('genki')">😊 元気</button>
+  <button id="imaitiiBtn" onclick="setCondition('imaitii')">😵 いまいち…</button>
+</div>
+
+<div class="buttons">
+  <button onclick="drawNormal()">ノーマルご飯ガチャ</button>
+  <button onclick="drawAdventure()">冒険ご飯ガチャ</button>
+</div>
+
+<div id="resultBox"></div>
+<div id="note">今日は無理ならスキップしてOK</div>
+
+<button id="retryButton" onclick="retry()" style="display:none;">
+  もう一回回す
+</button>
+
+<script>
+let condition = "genki"; // genki / imaitii
+let lastType = null;
+
+function setCondition(c) {
+  condition = c;
+  document.getElementById("genkiBtn").classList.remove("selected");
+  document.getElementById("imaitiiBtn").classList.remove("selected");
+
+  if (c === "genki") {
+    document.getElementById("genkiBtn").classList.add("selected");
+  } else {
+    document.getElementById("imaitiiBtn").classList.add("selected");
   }
 }
 
-  </style>
-</head>
-<body>
+setCondition("genki");
 
-  <h1>今日のご飯は？</h1>
+const normalMeals = [
+  { name: "オムライス（原宿オム）", type: "heavy" },
+  { name: "オムライス（フェリーチェ）", type: "heavy" },
+  { name: "とろろ飯", type: "light" },
+  { name: "ナナズ", type: "light" },
+  { name: "丸亀＋スコーン", type: "middle" },
+  { name: "スープストックトーキョー（自由が丘）", type: "light" },
+  { name: "日高屋", type: "heavy" },
+  { name: "日高屋＋ナナズパフェ", type: "heavy" },
+  { name: "吉野家", type: "heavy" },
+  { name: "かつや", type: "heavy" },
+  { name: "プロント（川崎）", type: "middle" },
+  { name: "ココイチ", type: "heavy" },
+  { name: "大学", type: "light" },
+  { name: "大戸屋（元住吉・日吉）", type: "middle" },
+  { name: "餃子の王将（時間次第で！）", type: "heavy" }
+];
 
-  <div class="buttons">
-    <button onclick="drawNormal()">ノーマルご飯ガチャ</button>
-    <button onclick="drawAdventure()">冒険ご飯ガチャ</button>
-  </div>
+const adventureMeals = [
+  "渋谷IKEA",
+  "ホワイトオム（秋葉原）",
+  "goodspoon",
+  "終日one・バー",
+  "川崎ナトゥーラ（ビュッフェ）"
+];
 
-  <div id="resultBox"></div>
+function weightedRandom(meals) {
+  let pool = [];
 
-  <div id="note">
-    今日は無理ならスキップしてOK
-  </div>
-
-  <button id="retryButton" onclick="retry()" style="display:none;">
-    もう一回回す
-  </button>
-
-  <script>
-    const normalMeals = [
-      "オムライス（原宿オム）",
-      "オムライス（フェリーチェ）",
-      "とろろ飯",
-      "ナナズ",
-      "丸亀＋スコーン",
-      "スープストックトーキョー（自由が丘）",
-      "日高屋",
-      "日高屋＋ナナズパフェ",
-      "吉野家",
-      "かつや",
-      "プロント（川崎）",
-      "ココイチ",
-      "大学",
-      "大戸屋（元住吉・日吉）",
-      "餃子の王将（時間次第で！）"
-    ];
-
-    const adventureMeals = [
-      "渋谷IKEA",
-      "ホワイトオム（秋葉原）",
-      "goodspoon",
-      "終日one・バー",
-      "川崎ナトゥーラ（ビュッフェ）"
-    ];
-
-    let lastType = null;
-
-    function showResult(text) {
-      const box = document.getElementById("resultBox");
-      box.textContent = text;
-      box.style.display = "block";
-
-      document.getElementById("note").style.display = "block";
-      document.getElementById("retryButton").style.display = "inline-block";
+  meals.forEach(meal => {
+    if (condition === "genki") {
+      if (meal.type === "heavy") pool.push(meal, meal, meal);
+      if (meal.type === "middle") pool.push(meal, meal);
+      if (meal.type === "light") pool.push(meal);
+    } else {
+      if (meal.type === "light") pool.push(meal, meal, meal);
+      if (meal.type === "middle") pool.push(meal, meal);
+      if (meal.type === "heavy") pool.push(meal);
     }
+  });
 
-    function drawNormal() {
-      lastType = "normal";
-      const result = normalMeals[Math.floor(Math.random() * normalMeals.length)];
-      showResult("🍚 ノーマルご飯ガチャの結果\n" + result);
-    }
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 
-    function drawAdventure() {
-      lastType = "adventure";
-      const result = adventureMeals[Math.floor(Math.random() * adventureMeals.length)];
-      showResult("🌱 冒険ご飯ガチャの結果\n" + result);
-    }
+function showResult(text) {
+  const box = document.getElementById("resultBox");
+  box.textContent = text;
+  box.style.display = "block";
+  document.getElementById("note").style.display = "block";
+  document.getElementById("retryButton").style.display = "inline-block";
+}
 
-    function retry() {
-      if (lastType === "normal") {
-        drawNormal();
-      } else if (lastType === "adventure") {
-        drawAdventure();
-      }
-    }
-  </script>
+function drawNormal() {
+  lastType = "normal";
+  const result = weightedRandom(normalMeals);
+  showResult("🍚 ノーマルご飯ガチャの結果\n" + result.name);
+}
+
+function drawAdventure() {
+  lastType = "adventure";
+  const result = adventureMeals[Math.floor(Math.random() * adventureMeals.length)];
+  showResult("🌱 冒険ご飯ガチャの結果\n" + result);
+}
+
+function retry() {
+  if (lastType === "normal") {
+    drawNormal();
+  } else if (lastType === "adventure") {
+    drawAdventure();
+  }
+}
+</script>
 
 </body>
 </html>
